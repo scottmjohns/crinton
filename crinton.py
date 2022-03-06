@@ -1,5 +1,4 @@
 import sys
-from random import shuffle
 import collections
 from math import sqrt
 import numpy as np
@@ -32,6 +31,7 @@ def play_game(ante: int, number_of_players: int, strategy: list, max_loss: int, 
 
 	if verbose: print("***** New Hand *****")
 	while pot > 0:
+
 		all_players_out = True
 		player = 0
 		while all_players_out and player < number_of_players:
@@ -39,23 +39,29 @@ def play_game(ante: int, number_of_players: int, strategy: list, max_loss: int, 
 				all_players_out = False
 			player += 1
 		if all_players_out: return [0.0]*number_of_players, hand_count, min_bet_count
+
 		if chips[current_player] > -max_loss + 1:
 			if len(deck) == 4:
 				if verbose: print("*shuffle*")
 				deck = build_new_deck()
 				card_count = collections.Counter(deck)
+
 			left, right = deck.pop(), deck.pop()
 			card_count[left] -= 1
 			card_count[right] -= 1
 			hand_count[current_player] += 1
+
 			if left == 1 and left == right:
 				right = 14
 			if left > right:
 				left, right = right, left
+
 			bet = strategy[current_player](left, right, card_count, chips[current_player], pot, deck, max_loss)
 			if bet == 1: min_bet_count[current_player] += 1
+
 			middle = deck.pop()
 			card_count[middle] -= 1
+
 			chips[current_player], pot = payoff(left, right, middle, chips[current_player], pot, bet)
 			if verbose: print("Player: {}, Left: {} Middle: {} Right: {}, Bet: {}, Chip count: {}, Pot: {}".format(current_player, left, middle, right, bet, chips, pot))
 			if pot == 0:
@@ -69,11 +75,16 @@ def display_results(total_hand_count: dict, number_of_games: int, number_of_play
 
 def get_strategies(strategies: list) -> list:
 	strategy = []
+	strategy_space = [perfect, strategy_home, strategy_home2, fh_11_8, fh_12_8, fh_13_8]
 	for e in strategies:
+		if e == 'r':
+			strategy.append(np.random.choice(strategy_space))
 		if e == 'p':
 			strategy.append(perfect)
 		if e == 'h':
 			strategy.append(strategy_home)
+		if e == 'h2':
+			strategy.append(strategy_home2)
 		if e == "117":
 			strategy.append(fh_11_7)
 		if e == "118":
@@ -88,7 +99,16 @@ def get_strategies(strategies: list) -> list:
 			strategy.append(fh_13_8)
 	return strategy
 
-def main(ante, number_of_players, number_of_games, max_loss, strategies):
+def main(ante: int, number_of_players: int, number_of_games: int, max_loss: int, strategies: list):
+	"""
+	Runs the game Crinton a fixed number of times with given strategies, and
+	displays the aggregated results.
+
+	Inputs:
+	ante: the number of chips anted by each player at the beginning of the game
+
+
+	"""
 	strategy_list = get_strategies(strategies)
 	game_count = 0
 	results = {}
@@ -128,35 +148,28 @@ if __name__ == "__main__":
 
 """
 Which position has an advantage?
-Ante:   6	Total hand counts: {0: 481199844, 1: 476404771}	 Runs: 10000000
-Player: 0	Strategy: perfect	Chips won per game: -1.762	Chips won per hand: -0.0366	Min, Max: (-161,161)
-Player: 1	Strategy: perfect	Chips won per game: 1.762	Chips won per hand: 0.0370	Min, Max: (-161,161)
+Ante:   6	Total hand counts: {0: 2405375733, 1: 2382318575}	 Runs: 50000000
+Player: 0	Strategy: perfect 	Chips won per game: -1.766	Chips won per hand: -0.0367	Min, Max: (-160,160)	Min bet %: 0.864
+Player: 1	Strategy: perfect 	Chips won per game: 1.766	Chips won per hand: 0.0371	Min, Max: (-160,160)	Min bet %: 0.859
 
-Ante:   6	Total hand counts: {0: 329547567, 1: 326074960, 2: 322894495}	 Runs: 10000000
-Player: 0	Strategy: perfect	Chips won per game: 0.170	Chips won per hand: 0.0052	Min, Max: (-161,322)
-Player: 1	Strategy: perfect	Chips won per game: -0.095	Chips won per hand: -0.0029	Min, Max: (-161,322)
-Player: 2	Strategy: perfect	Chips won per game: -0.076	Chips won per hand: -0.0023	Min, Max: (-161,322)
+Ante:   6	Total hand counts: {0: 1647069886, 1: 1629689380, 2: 1613506871}	 Runs: 50000000
+Player: 0	Strategy: perfect 	Chips won per game: 0.178	Chips won per hand: 0.0054	Min, Max: (-160,320)	Min bet %: 0.860
+Player: 1	Strategy: perfect 	Chips won per game: -0.097	Chips won per hand: -0.0030	Min, Max: (-160,320)	Min bet %: 0.860
+Player: 2	Strategy: perfect 	Chips won per game: -0.081	Chips won per hand: -0.0025	Min, Max: (-160,320)	Min bet %: 0.860
 
-Ante:   6	Total hand counts: {0: 250819858, 1: 249702508, 2: 248116082, 3: 245257201}	 Runs: 10000000
-Player: 0	Strategy: perfect	Chips won per game: -2.456	Chips won per hand: -0.0979	Min, Max: (-161,483)
-Player: 1	Strategy: perfect	Chips won per game: -1.368	Chips won per hand: -0.0548	Min, Max: (-161,483)
-Player: 2	Strategy: perfect	Chips won per game: 0.339	Chips won per hand: 0.0137	Min, Max: (-161,483)
-Player: 3	Strategy: perfect	Chips won per game: 3.485	Chips won per hand: 0.1421	Min, Max: (-161,483)
+Ante:   6	Total hand counts: {0: 1253631877, 1: 1247948263, 2: 1239936032, 3: 1225678550}	 Runs: 50000000
+Player: 0	Strategy: perfect 	Chips won per game: -2.428	Chips won per hand: -0.0968	Min, Max: (-160,480)	Min bet %: 0.865
+Player: 1	Strategy: perfect 	Chips won per game: -1.364	Chips won per hand: -0.0547	Min, Max: (-160,480)	Min bet %: 0.860
+Player: 2	Strategy: perfect 	Chips won per game: 0.334	Chips won per hand: 0.0135	Min, Max: (-160,480)	Min bet %: 0.858
+Player: 3	Strategy: perfect 	Chips won per game: 3.458	Chips won per hand: 0.1411	Min, Max: (-160,480)	Min bet %: 0.853
 
-Ante:   6	Total hand counts: {0: 205411394, 1: 203102824, 2: 201079720, 3: 199172275, 4: 197409095}	 Runs: 10000000
-Player: 0	Strategy: perfect	Chips won per game: 0.639	Chips won per hand: 0.0311	Min, Max: (-161,643)
-Player: 1	Strategy: perfect	Chips won per game: 0.065	Chips won per hand: 0.0032	Min, Max: (-161,643)
-Player: 2	Strategy: perfect	Chips won per game: -0.237	Chips won per hand: -0.0118	Min, Max: (-161,643)
-Player: 3	Strategy: perfect	Chips won per game: -0.342	Chips won per hand: -0.0172	Min, Max: (-161,643)
-Player: 4	Strategy: perfect	Chips won per game: -0.124	Chips won per hand: -0.0063	Min, Max: (-161,643)
+Ante:   6	Total hand counts: {0: 1026510623, 1: 1014923558, 2: 1004691373, 3: 995399014, 4: 986343295}	 Runs: 50000000
+Player: 0	Strategy: perfect 	Chips won per game: 0.641	Chips won per hand: 0.0312	Min, Max: (-160,640)	Min bet %: 0.858
+Player: 1	Strategy: perfect 	Chips won per game: 0.061	Chips won per hand: 0.0030	Min, Max: (-160,640)	Min bet %: 0.858
+Player: 2	Strategy: perfect 	Chips won per game: -0.256	Chips won per hand: -0.0128	Min, Max: (-160,640)	Min bet %: 0.859
+Player: 3	Strategy: perfect 	Chips won per game: -0.334	Chips won per hand: -0.0168	Min, Max: (-160,640)	Min bet %: 0.859
+Player: 4	Strategy: perfect 	Chips won per game: -0.112	Chips won per hand: -0.0057	Min, Max: (-160,640)	Min bet %: 0.858
 
-Ante:   6	Total hand counts: {0: 174061098, 1: 172734212, 2: 170679354, 3: 169271457, 4: 167073696, 5: 165894616}	 Runs: 10000000
-Player: 0	Strategy: perfect	Chips won per game: -0.679	Chips won per hand: -0.0390	Min, Max: (-161,803)
-Player: 1	Strategy: perfect	Chips won per game: 0.897	Chips won per hand: 0.0519	Min, Max: (-161,803)
-Player: 2	Strategy: perfect	Chips won per game: -0.569	Chips won per hand: -0.0333	Min, Max: (-161,804)
-Player: 3	Strategy: perfect	Chips won per game: 1.164	Chips won per hand: 0.0688	Min, Max: (-161,803)
-Player: 4	Strategy: perfect	Chips won per game: -1.085	Chips won per hand: -0.0650	Min, Max: (-161,803)
-Player: 5	Strategy: perfect	Chips won per game: 0.272	Chips won per hand: 0.0164	Min, Max: (-161,803)
 
 Ante:   6	Total hand counts: {0: 832580408, 1: 807485518}	 Runs: 50000000
 Player: 0	Strategy: strategy_home 	Chips won per game: -0.068	Chips won per hand: -0.0041	Min, Max: (-160,160)	Min bet %: 0.921
@@ -167,13 +180,54 @@ Player: 0	Strategy: strategy_home 	Chips won per game: -0.027	Chips won per hand
 Player: 1	Strategy: strategy_home 	Chips won per game: 0.024	Chips won per hand: 0.0018	Min, Max: (-160,320)	Min bet %: 0.921
 Player: 2	Strategy: strategy_home 	Chips won per game: 0.002	Chips won per hand: 0.0002	Min, Max: (-160,320)	Min bet %: 0.921
 
+Ante:   6	Total hand counts: {0: 650090049, 1: 637413819, 2: 624984044, 3: 612561080}	 Runs: 50000000
+Player: 0	Strategy: strategy_home 	Chips won per game: -0.058	Chips won per hand: -0.0045	Min, Max: (-160,480)	Min bet %: 0.922
+Player: 1	Strategy: strategy_home 	Chips won per game: -0.017	Chips won per hand: -0.0013	Min, Max: (-160,480)	Min bet %: 0.921
+Player: 2	Strategy: strategy_home 	Chips won per game: 0.023	Chips won per hand: 0.0019	Min, Max: (-160,480)	Min bet %: 0.921
+Player: 3	Strategy: strategy_home 	Chips won per game: 0.052	Chips won per hand: 0.0042	Min, Max: (-160,480)	Min bet %: 0.921
+
+Ante:   6	Total hand counts: {0: 562373371, 1: 552076601, 2: 542097354, 3: 532116427, 4: 522341198}	 Runs: 50000000
+Player: 0	Strategy: strategy_home 	Chips won per game: 0.038	Chips won per hand: 0.0034	Min, Max: (-160,640)	Min bet %: 0.921
+Player: 1	Strategy: strategy_home 	Chips won per game: 0.012	Chips won per hand: 0.0011	Min, Max: (-160,640)	Min bet %: 0.921
+Player: 2	Strategy: strategy_home 	Chips won per game: -0.004	Chips won per hand: -0.0003	Min, Max: (-160,640)	Min bet %: 0.921
+Player: 3	Strategy: strategy_home 	Chips won per game: -0.014	Chips won per hand: -0.0013	Min, Max: (-160,640)	Min bet %: 0.921
+Player: 4	Strategy: strategy_home 	Chips won per game: -0.032	Chips won per hand: -0.0031	Min, Max: (-160,640)	Min bet %: 0.921
 
 
-Ante:   6	Total hand counts: {0: 112514156, 1: 110439963, 2: 108433652, 3: 106426182, 4: 104487334}	 Runs: 10000000
-Player: 0	Strategy: strategy_home 	Chips won per game: 0.055	Chips won per hand: 0.0049	Min, Max: (-160,640)	Min bet %: 0.921
-Player: 1	Strategy: strategy_home 	Chips won per game: 0.026	Chips won per hand: 0.0024	Min, Max: (-160,640)	Min bet %: 0.921
-Player: 2	Strategy: strategy_home 	Chips won per game: -0.008	Chips won per hand: -0.0008	Min, Max: (-160,640)	Min bet %: 0.922
-Player: 3	Strategy: strategy_home 	Chips won per game: -0.043	Chips won per hand: -0.0040	Min, Max: (-160,640)	Min bet %: 0.921
-Player: 4	Strategy: strategy_home 	Chips won per game: -0.030	Chips won per hand: -0.0029	Min, Max: (-160,640)	Min bet %: 0.921
+Ante:   6	Total hand counts: {0: 1266134140, 1: 1241549237}	 Runs: 50000000
+Player: 0	Strategy: strategy_home2 	Chips won per game: -0.072	Chips won per hand: -0.0028	Min, Max: (-160,160)	Min bet %: 0.873
+Player: 1	Strategy: strategy_home2 	Chips won per game: 0.072	Chips won per hand: 0.0029	Min, Max: (-160,160)	Min bet %: 0.873
+
+Ante:   6	Total hand counts: {0: 1007519215, 1: 990612290, 2: 974192585}	 Runs: 50000000
+Player: 0	Strategy: strategy_home2 	Chips won per game: -0.022	Chips won per hand: -0.0011	Min, Max: (-160,320)	Min bet %: 0.873
+Player: 1	Strategy: strategy_home2 	Chips won per game: 0.012	Chips won per hand: 0.0006	Min, Max: (-160,320)	Min bet %: 0.873
+Player: 2	Strategy: strategy_home2 	Chips won per game: 0.011	Chips won per hand: 0.0005	Min, Max: (-160,320)	Min bet %: 0.873
+
+Ante:   6	Total hand counts: {0: 886697065, 1: 874436859, 2: 862024704, 3: 849679946}	 Runs: 50000000
+Player: 0	Strategy: strategy_home2 	Chips won per game: -0.051	Chips won per hand: -0.0028	Min, Max: (-160,480)	Min bet %: 0.874
+Player: 1	Strategy: strategy_home2 	Chips won per game: -0.013	Chips won per hand: -0.0008	Min, Max: (-160,480)	Min bet %: 0.874
+Player: 2	Strategy: strategy_home2 	Chips won per game: 0.020	Chips won per hand: 0.0012	Min, Max: (-160,480)	Min bet %: 0.873
+Player: 3	Strategy: strategy_home2 	Chips won per game: 0.044	Chips won per hand: 0.0026	Min, Max: (-160,480)	Min bet %: 0.873
+
+Ante:   6	Total hand counts: {0: 759949248, 1: 749956125, 2: 739922859, 3: 730005343, 4: 720081154}	 Runs: 50000000
+Player: 0	Strategy: strategy_home2 	Chips won per game: 0.038	Chips won per hand: 0.0025	Min, Max: (-160,640)	Min bet %: 0.873
+Player: 1	Strategy: strategy_home2 	Chips won per game: 0.029	Chips won per hand: 0.0019	Min, Max: (-160,640)	Min bet %: 0.874
+Player: 2	Strategy: strategy_home2 	Chips won per game: -0.004	Chips won per hand: -0.0003	Min, Max: (-160,640)	Min bet %: 0.874
+Player: 3	Strategy: strategy_home2 	Chips won per game: -0.019	Chips won per hand: -0.0013	Min, Max: (-160,640)	Min bet %: 0.874
+Player: 4	Strategy: strategy_home2 	Chips won per game: -0.043	Chips won per hand: -0.0030	Min, Max: (-160,640)	Min bet %: 0.873
+
+Ante:   6	Total hand counts: {0: 72816657, 1: 69540830, 2: 72303486, 3: 69303478, 4: 70887212}	 Runs: 5000000
+Player: 0	Strategy: fh_13_8 			Chips won per game: -1.323	Chips won per hand: -0.0908	Min, Max: (-160,640)	Min bet %: 0.814
+Player: 1	Strategy: fh_11_8 			Chips won per game: 1.463	Chips won per hand: 0.1052	Min, Max: (-160,640)	Min bet %: 0.814
+Player: 2	Strategy: strategy_home2 	Chips won per game: 0.588	Chips won per hand: 0.0406	Min, Max: (-160,640)	Min bet %: 0.874
+Player: 3	Strategy: fh_13_8 			Chips won per game: -1.294	Chips won per hand: -0.0933	Min, Max: (-160,640)	Min bet %: 0.814
+Player: 4	Strategy: strategy_home2 	Chips won per game: 0.566	Chips won per hand: 0.0399	Min, Max: (-160,640)	Min bet %: 0.874
+
+Ante:   6	Total hand counts: {0: 52915361, 1: 55223386, 2: 54701835, 3: 49311680, 4: 47868259}	 Runs: 5000000
+Player: 0	Strategy: fh_13_8 			Chips won per game: -1.990	Chips won per hand: -0.1880	Min, Max: (-160,640)	Min bet %: 0.813
+Player: 1	Strategy: perfect 			Chips won per game: 2.059	Chips won per hand: 0.1864	Min, Max: (-160,640)	Min bet %: 0.856
+Player: 2	Strategy: strategy_home 	Chips won per game: -0.376	Chips won per hand: -0.0344	Min, Max: (-160,640)	Min bet %: 0.922
+Player: 3	Strategy: fh_11_8 			Chips won per game: 0.162	Chips won per hand: 0.0164	Min, Max: (-160,640)	Min bet %: 0.813
+Player: 4	Strategy: fh_11_8 			Chips won per game: 0.145	Chips won per hand: 0.0151	Min, Max: (-160,640)	Min bet %: 0.813
 
 """

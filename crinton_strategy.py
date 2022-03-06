@@ -51,3 +51,13 @@ def strategy_home(left, right, card_count, chips, pot, deck, max_loss):
 		return min(max_bet, round(0.5*pot))
 	max_bet = int(0.5*(chips + max_loss))
 	return min(max_bet, pot)
+
+def strategy_home2(left, right, card_count, chips, pot, deck, max_loss):
+	gap = right - left
+	if gap <= 8:
+		return 1
+	elif (9 <= gap <= 10) or (pot > 20 and 11 <= gap <= 12):
+		max_bet = int(0.5*(chips + max_loss))
+		return min(max_bet, round(0.5*pot))
+	max_bet = int(0.5*(chips + max_loss))
+	return min(max_bet, pot)
