@@ -23,10 +23,14 @@ class Player:
         left, right = card_tuple
         gap = abs(right-left)
         bet = 0
-        if 2 <= gap <= 7: bet = 1
-        if 8 <= gap <= 10: bet = 4
-        if 11 <= gap <= 12: bet = 12
-        if 13 <= gap <= 14: bet = 10000000
+        if 2 <= gap <= 7: 
+            bet = 1
+        if 8 <= gap <= 10: 
+            bet = 4
+        if 11 <= gap <= 12: 
+            bet = 12
+        if 13 <= gap <= 14: 
+            bet = 10000000
         return bet
 
     def left_ace(self, deck):

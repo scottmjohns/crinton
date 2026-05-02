@@ -15,8 +15,10 @@ def srank(cr, lr=None):
     if cr is None: 
         return None
     if cr == 'A':
-        if lr[0] in ['L','H']: return STRAT_RANKS.index(lr[0])
-        if lr[1] in ['L','H']: return STRAT_RANKS.index(lr[1])
+        if lr[0] in ['L','H']: 
+            return STRAT_RANKS.index(lr[0])
+        if lr[1] in ['L','H']: 
+            return STRAT_RANKS.index(lr[1])
         return STRAT_RANKS.index('H') if (13-STRAT_RANKS.index(lr[0]) >= STRAT_RANKS.index(lr[1])) else STRAT_RANKS.index('L')
     return STRAT_RANKS.index(cr)
 
@@ -25,7 +27,7 @@ class GameExecution(Protocol):
         ...   
     def choose_bet(l: Rank, r: Rank) -> int:
         ...
-    def get_payout(bet: int, l: Rank, r: Rank) -> int, Rank:
+    def get_payout(bet: int, l: Rank, r: Rank) -> tuple[int, Rank]:
         ...
 
 class Strategy(Protocol):
