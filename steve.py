@@ -5,7 +5,6 @@ import numpy as np
 import crinton_strategies as cs
 from enum import StrEnum, auto
 
-
 STRAT_RANKS = 'L23456789TJQKH'
 
 class GameType(StrEnum):
@@ -14,17 +13,16 @@ class GameType(StrEnum):
     GAMBLOR = auto()
 
 
-class Player:
-    def __init__(self, \
-                 chips: int, \
-                 strategy: cs.Strategy, \
-                 second_strategy: cs.Strategy | None = None):
-        self.chips = chips
-        self.strategy = strategy
-        self.second_strategy = second_strategy
-        self.turns = 0
-        self.payouts = []
-
+# class Player:
+#     def __init__(self, \
+#                  chips: int, \
+#                  strategy: cs.Strategy, \
+#                  second_strategy: cs.Strategy | None = None):
+#         self.chips = chips
+#         self.strategy = strategy
+#         self.second_strategy = second_strategy
+#         self.turns = 0
+#         self.payouts = []
 
     ''' STEVE '''
     # def choose_left_gap(self, left, middle, right):
@@ -62,8 +60,25 @@ class Game:
             case 'gamblor':
                 self.arg_count = 7
                 self.min_count = 3
-
         self.play_game()
+
+    def ante(self):
+        self.pot = self.player_ante * self.player_count
+        for player in self.players:
+            player.chips -= self.player_ante
+            player.payouts.append(-self.player_ante)
+
+    def process_payout(self, cp, payout):
+        self.players[cp].chips += payout
+        self.pot -= payout
+
+    def deal_deck(self):
+        self.deck = [r+s for r in '23456789TJQKA' for s in 'SCHD']
+        np.random.shuffle(self.deck)
+        if not self.arg:
+            self.arg = tuple([self.deck.pop() for _ in range(self.arg_count)])
+            return self.deck
+        self.deck = [e for e in self.deck if e not in self.arg]
 
     def play_game(self):
         self.ante()
@@ -84,10 +99,9 @@ class Game:
                     Game(deck, players, GameExecution, ante)
                     Players(chips, GameStrategy)
                     '''
-                # left, right     = self.crinton_deal_leftright(current_player) ###
-                # bet             = self.choose_bet(current_player, l=left, r=right)
-                # payout1, middle = self.get_crinton_payout(current_player, bet, l=left, r=right) ###
-                payout = self.execution(current_player, self.players[current_player].strategy)
+                payout, self.deck = self.execution(self.players[current_player], \
+                                                   self.deck, \
+                                                   self.pot)
                 self.process_payout(current_player, payout)
                 self.players[current_player].payouts.append(payout)
             current_player = (current_player+1) % self.player_count
@@ -109,14 +123,14 @@ class Game:
                 #             self.process_payout(op, payout2)
                 #             self.players[op].payouts.append(payout2)
 
-                ''' STEVE
+            ''' STEVE
                     Deal L, R --- from above
                     ignore bet outcome from above
                     uses middle from above
                     determines which gap to bet
                     chooses bet size
                     processes payout
-                    '''
+            '''
                 # if self.gtype == 'steve':
                 #     if self.players[current_player].chips > 0 and self.pot > 0 and middle:
                 #         nl, nr, left_gap, = self.steve_choose_leftright(current_player, left, middle, right)
@@ -124,25 +138,6 @@ class Game:
                 #         payout2, xmiddle  = self.get_steve_payout(current_player, bet, l=nl, r=nr)
                 #         self.process_payout(current_player, payout2)
                 #         self.players[current_player].payouts.append(payout2)
-
-
-    def ante(self):
-        self.pot = self.player_ante * self.player_count
-        for player in self.players:
-            player.chips -= self.player_ante
-            player.payouts.append(-self.player_ante)
-
-    def process_payout(self, cp, payout):
-        self.players[cp].chips += payout
-        self.pot -= payout
-
-    def deal_deck(self):
-        self.deck = [r+s for r in '23456789TJQKA' for s in 'SCHD']
-        np.random.shuffle(self.deck)
-        if not self.arg:
-            self.arg = tuple([self.deck.pop() for _ in range(self.arg_count)])
-            return self.deck
-        self.deck = [e for e in self.deck if e not in self.arg]
 
 
     def steve_choose_leftright(self, current_player, left, middle, right):
@@ -190,6 +185,9 @@ class Game:
             return payout
         return None
 
+def default_gamblor_strategy(l, r):
+    gap = 13 - srank(r,(l,r)) + srank(l,(l,r))
+    return 1 if gap >= 7 else 0
 
 def main(gtype: GameType, player_count: int, ante: int, game_count: int) -> None:
     turns  = [0 for _ in range(player_count)]
