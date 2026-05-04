@@ -1,4 +1,5 @@
 import crinton as cr
+import steve as st
 import analysis as an
 import numpy as np
 import protocols as p
@@ -10,8 +11,8 @@ class GameType(StrEnum):
     STEVE   = auto()
     GAMBLOR = auto()
 
-ARG_COUNT = {'crinton': 3}
-MIN_COUNT = {'crinton': 3}
+ARG_COUNT = {'crinton': 3, 'steve': 5}
+MIN_COUNT = {'crinton': 3, 'steve': 4}
 
 class Game:
     def __init__(self, 
@@ -69,6 +70,7 @@ def run_analysis(gtype: GameType,
                  player_count: int, 
                  game_count: int, 
                  player_ante: int, 
+                 execution: p.GameExecution,
                  player_strategies: list[p.Strategy]):
     analysis: an.Analysis = an.Analysis(gtype=gtype, 
                                         player_strategies=player_strategies, 
@@ -79,7 +81,7 @@ def run_analysis(gtype: GameType,
                           strategy=player_strategies[j]) 
                    for j in range(player_count)]
         game = Game(gtype=gtype, 
-                    execution=cr.CrintonExecution, 
+                    execution=execution, 
                     players=players, 
                     player_ante=player_ante)
         for j in range(player_count):
@@ -92,9 +94,16 @@ def main():
     player_count: int = 5
     run_analysis(gtype='crinton',
                  player_count=player_count,
-                 game_count=100000,
+                 game_count=1_000_000,
                  player_ante=4,
+                 execution=cr.CrintonExecution,
                  player_strategies = [cr.CrintonStrategy()]*player_count)
+    run_analysis(gtype='steve',
+                 player_count=player_count,
+                 game_count=1_000_000,
+                 player_ante=4,
+                 execution=st.SteveExecution,
+                 player_strategies = [st.SteveStrategy()]*player_count)
 
 if __name__ == "__main__":
     main()
