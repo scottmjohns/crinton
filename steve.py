@@ -7,6 +7,20 @@ from enum import StrEnum, auto
 
 STRAT_RANKS = 'L23456789TJQKH'
 
+'''
+        match self.gtype:
+            case 'crinton':
+                self.arg_count = 3
+                self.min_count = 3
+            case 'steve':
+                self.arg_count = 5
+                self.min_count = 4
+            case 'gamblor':
+                self.arg_count = 7
+                self.min_count = 3
+
+'''
+
 class GameType(StrEnum):
     CRINTON = auto()
     STEVE = auto()
@@ -79,6 +93,9 @@ class Game:
             self.arg = tuple([self.deck.pop() for _ in range(self.arg_count)])
             return self.deck
         self.deck = [e for e in self.deck if e not in self.arg]
+    
+    def deal_card(self);
+        if 
 
     def play_game(self):
         self.ante()

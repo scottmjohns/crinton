@@ -23,37 +23,35 @@ class CrintonStrategy(Strategy):
         return DEFAULT_BET[gap]
 
 class CrintonExecution(GameExecution):
-    def __init__(self, current_player: Player, deck, pot) -> int:
+    def __init__(self, current_player: Player, pot) -> int:
         self.player = current_player
         self.strategy = self.player.strategy
-        self.deck = deck
         self.pot = pot
-        self.payout = self.execute()
 
-    def execute(self):
-        left, right = self.deal_leftright()
-        bet = self.choose_bet(left=left, right=right)
-        payout, middle = self.get_payout(bet, left=left, right=right)
-        return payout
+    def execute(self, deck) -> int:
+        left, right, deck = self.deal_leftright(deck)
+        bet: int = self.choose_bet(left=left, right=right)
+        payout, middle, deck = self.get_payout(bet, deck, left=left, right=right)
+        return payout, deck
     
-    def deal_leftright(self) -> tuple[Rank, Rank]:
-        left, right = crank(self.deck.pop()), crank(self.deck.pop())
+    def deal_leftright(self, deck) -> tuple[Rank, Rank]:
+        left, right = crank(deck.pop()), crank(deck.pop())
         if left  == 'A': 
             left = self.strategy.left_ace()
         if right == 'A': 
             right = self.strategy.right_ace(left=left)
         if srank(left) > srank(right): 
             right, left = left, right
-        return left, right
+        return left, right, deck
     def choose_bet(self, left, right):
         return 0 if abs(srank(right,(left,right))-srank(left,(left,right))) < 2 \
                     else min(self.strategy.bet_strategy(left,right), self.pot)
-    def get_payout(self, bet, left, right):
+    def get_payout(self, bet, deck, left, right):
         ''' Crinton payout '''
         if bet == 0: 
-            return 1, None
+            return 1, None, deck
         else:
-            middle, sl, sr = crank(self.deck.pop()), \
+            middle, sl, sr = crank(deck.pop()), \
                              srank(left, (left,right)), \
                              srank(right, (left,right))
             sm = 0 if middle=='A' else srank(middle, (left,right))
@@ -67,4 +65,4 @@ class CrintonExecution(GameExecution):
                 payout = bet
             else:
                 payout = -bet
-            return payout, middle    
+            return payout, middle, deck    
