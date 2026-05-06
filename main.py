@@ -1,5 +1,6 @@
 import crinton as cr
 import steve as st
+import gamblor as ga
 import analysis as an
 import numpy as np
 import protocols as p
@@ -17,7 +18,7 @@ MIN_COUNT = {'crinton': 3, 'steve': 4, 'gamblor': 3}
 class Game:
     def __init__(self, 
                  gtype: GameType, 
-                 execution: cr.GameExecution, 
+                 execution: p.GameExecution, 
                  players: list[Player], 
                  player_ante: int) \
                  -> None:
@@ -88,10 +89,16 @@ def run_analysis(gtype: GameType,
                     execution=execution, 
                     players=players, 
                     player_ante=player_ante)
+#        if gtype=='gamblor':
+#            for j in range(player_count):
+#                print(f'{game.players[j].payouts=} {sum(game.players[j].payouts)}')
         for j in range(player_count):
             analysis.turns[j]     += game.players[j].turns
             analysis.chips_won[j] += game.players[j].chips-game.starting_chips[j]
+#            if gtype=='gamblor': 
+#                print(f'{analysis.chips_won[j]=}')
             analysis.payouts[j].extend([sum(game.players[j].payouts)])
+#        if gtype=='gamblor': input()
     analysis.display_results()
 
 def main():
@@ -108,6 +115,12 @@ def main():
                  player_ante=4,
                  execution=st.SteveExecution,
                  player_strategies = [st.SteveStrategy()]*player_count)
+    run_analysis(gtype='gamblor',
+                 player_count=player_count,
+                 game_count=1_000_000,
+                 player_ante=4,
+                 execution=ga.GamblorExecution,
+                 player_strategies = [ga.GamblorStrategy()]*player_count)
 
 if __name__ == "__main__":
     main()

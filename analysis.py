@@ -25,4 +25,3 @@ class Analysis():
            cwg = f'\tChips Won/g: {sum(self.payouts[p])/self.game_count:8.3f}'
            sd = f' {stdev(self.payouts[p]):8.2f}' 
            print(pl+strat+t+cw+r+cwg+sd)
-#           print(f"Player {p}  Strategies: {self.player_strategies[p].name}  Turns: {self.turns[p]:>10} Chips Won: {self.chips_won[p]:>9} ROI/t: {roi[p]:10.5f}\tChips Won/g: {sum(self.payouts[p])/self.game_count:8.3f} {stdev(self.payouts[p]):8.2f}")

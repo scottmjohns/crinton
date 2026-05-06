@@ -1,11 +1,18 @@
 from functools import cache
 from typing import Protocol
+from player import Player
 
 type Rank = str
 
 STRAT_RANKS = 'L23456789TJQKH'
 
 class GameExecution(Protocol):
+    def __init__(self, current_player: Player, players: list[Player], pot) -> int:
+        self.player = current_player
+        self.players = players
+        self.strategy = self.player.strategy
+        self.pot = pot
+
     def deal_leftright() -> tuple[Rank, Rank]:
         ...   
     def choose_bet(left: Rank, right: Rank) -> int:

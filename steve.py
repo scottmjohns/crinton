@@ -1,28 +1,18 @@
-from protocols import Strategy, GameExecution, Rank, crank, srank
-from player import Player
+from protocols import Strategy, GameExecution
+import strategies as s
+import executions as ex
+
 
 class SteveStrategy(Strategy):
     def __init__(self):
         self.name = 'SteveStrategy'
-    def left_ace(self):
-        return 'L'
-    def right_ace(self, left):
-        if left == 'H': 
-            return 'L'
-        if left == 'L': 
-            return 'H'
-        return 'H' if srank(left) <= 7 else 'L'
-    def bet_strategy(self, left, right):
-        ''' Default Crinton bet strategy '''
-        DEFAULT_BET = {0:0,   1:0,         2:1,  3:1,  \
-                       4:1,   5:1,         6:1,  7:1,  \
-                       8:4,   9:4,        10:4, 11:12, \
-                       12:12, 13:1000000, 14:1000000}
-        left, right = srank(left,(left,right)), srank(right,(left,right))
-        gap = abs(right-left)
-        return DEFAULT_BET[gap]
+    left_ace = s.left_ace_is_L
+    right_ace = s.default_right_ace
+    bet_strategy = s.default_bet_strategy
     def choose_left_gap(self, left, middle, right):
-        leftend, rightend, mid = srank(left,(left,right)), srank(right,(left,right)), srank(middle,(left,right))
+        leftend, rightend, mid = s.srank(left,(left,right)), \
+                                 s.srank(right,(left,right)), \
+                                 s.srank(middle,(left,right))
         lgap, rgap  = abs(mid-leftend), abs(rightend-mid)
         if lgap in [0,1]:         
             return rgap <= 10
@@ -44,54 +34,29 @@ class SteveStrategy(Strategy):
             nr='H'
         return nl, nr
 
-''' STEVE
-                    Deal L, R --- from above
-                    ignore bet outcome from above
-                    uses middle from above
-                    determines which gap to bet
-                    chooses bet size
-                    processes payout
-            '''
-
 class SteveExecution(GameExecution):
-    def __init__(self, current_player: Player, players: list[Player], pot) -> int:
-        self.player = current_player
-        self.players = players
-        self.strategy = self.player.strategy
-        self.pot = pot
-
     def execute(self, deck) -> int:
-        left, right, deck = self.deal_leftright(deck)
-        bet: int = self.choose_bet(left=left, right=right)
-        payout, middle, deck = self.get_payout(bet, deck, left=left, right=right)
-        payouts = {p: payout if self.players[p]==self.player else 0 for p in range(len(self.players))}
+        payouts, left, middle, right, deck, _ = ex.crinton_execute(self, deck)
+        payout = 0
         if self.player.chips > 0 and self.pot > 0 and middle:
             nl, nr = self.strategy.steve_choose_leftright(left, middle, right)
             bet                    = self.choose_bet(left=nl, right=nr)
             payout, xmiddle, deck  = self.get_payout(bet, deck, left=nl, right=nr)
-        for p in range(len(self.players)):
-            if self.player==self.players[p]:
-                payouts[p] += payout
+        if payout:
+            for p in range(len(self.players)):
+                if self.player==self.players[p]:
+                    payouts[p] += payout
         return payouts, deck
 
-    def deal_leftright(self, deck) -> tuple[Rank, Rank]:
-        left, right = crank(deck.pop()), crank(deck.pop())
-        if left  == 'A': 
-            left = self.strategy.left_ace()
-        if right == 'A': 
-            right = self.strategy.right_ace(left=left)
-        if srank(left) > srank(right): 
-            right, left = left, right
-        return left, right, deck
-    def choose_bet(self, left, right):
-        return 0 if abs(srank(right,(left,right))-srank(left,(left,right))) < 2 \
-                 else min(self.strategy.bet_strategy(left,right), self.pot)
+    deal_leftright = ex.default_deal_leftright
+    choose_bet = ex.default_choose_bet
+
     def get_payout(self, bet, deck, left, right):
         if bet == 0: 
             return 1, None, deck
         else:
-            middle = crank(deck.pop())
-            sl, sm, sr = srank(left, (left,right)), srank(middle, (left,right)), srank(right, (left,right))
+            middle = s.crank(deck.pop())
+            sl, sm, sr = s.srank(left, (left,right)), s.srank(middle, (left,right)), s.srank(right, (left,right))
             if middle == 'A':
                 payout = -bet
                 if sl=='L' and sr!='H':   
