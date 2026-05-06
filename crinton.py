@@ -15,23 +15,4 @@ class CrintonExecution(GameExecution):
         return payouts, deck
     deal_leftright = ex.default_deal_leftright
     choose_bet = ex.default_choose_bet
-    def get_payout(self, bet, deck, left, right):
-        ''' Crinton payout '''
-        if bet == 0: 
-            return 1, None, deck
-        else:
-            middle, sl, sr = s.crank(deck.pop()), \
-                             s.srank(left, (left,right)), \
-                             s.srank(right, (left,right))
-            sm = 0 if middle=='A' else s.srank(middle, (left,right))
-            if sm==0 and \
-                ((sl in [0,13]) or \
-                (sr in [0,13])): 
-                payout = -2 * bet
-            elif sm in [sl, sr]: 
-                payout = -2 * bet
-            elif sl < sm < sr:   
-                payout = bet
-            else:
-                payout = -bet
-            return payout, middle, deck    
+    get_payout = ex.get_standard_payout

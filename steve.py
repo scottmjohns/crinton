@@ -50,29 +50,7 @@ class SteveExecution(GameExecution):
 
     deal_leftright = ex.default_deal_leftright
     choose_bet = ex.default_choose_bet
-
-    def get_payout(self, bet, deck, left, right):
-        if bet == 0: 
-            return 1, None, deck
-        else:
-            middle = s.crank(deck.pop())
-            sl, sm, sr = s.srank(left, (left,right)), s.srank(middle, (left,right)), s.srank(right, (left,right))
-            if middle == 'A':
-                payout = -bet
-                if sl=='L' and sr!='H':   
-                    middle = 'H'
-                elif sl=='H' and sr!='L': 
-                    middle = 'L'
-                elif sl not in ['H','L'] and sr not in ['H', 'L']:
-                     llg, lrg, rlg, rrg = sl, sr, 13-sl, 13-sr
-                     middle = 'L' if max(llg,lrg) >= max(rlg, rrg) else 'H'
-            elif sm in [sl, sr]: 
-                payout = -2 * bet
-            elif sl < sm < sr:   
-                payout = bet
-            else:                
-                payout = -bet
-            return payout, middle, deck
+    get_payout = ex.get_standard_payout
 
 
 '''

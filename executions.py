@@ -20,3 +20,24 @@ def default_deal_leftright(self, deck) -> tuple[Rank, Rank]:
 def default_choose_bet(self, left, right):
     return 0 if abs(srank(right,(left,right))-srank(left,(left,right))) < 2 \
                 else min(self.strategy.bet_strategy(left,right), self.pot)
+
+def get_standard_payout(self, bet, deck, left, right):
+    ''' Crinton payout '''
+    if bet == 0: 
+        return 1, None, deck
+    else:
+        middle, sl, sr = crank(deck.pop()), \
+                         srank(left, (left,right)), \
+                         srank(right, (left,right))
+        sm = 0 if middle=='A' else srank(middle, (left,right))
+        if sm==0 and \
+            ((sl in [0,13]) or \
+            (sr in [0,13])): 
+            payout = -2 * bet
+        elif sm in [sl, sr]: 
+            payout = -2 * bet
+        elif sl < sm < sr:   
+            payout = bet
+        else:
+            payout = -bet
+        return payout, middle, deck
