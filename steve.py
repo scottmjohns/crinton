@@ -4,16 +4,25 @@ import executions as ex
 
 
 class SteveStrategy(Strategy):
+    ''' Standard (and initial) Steve player strategy. 
+            Always chooses low for left ace.
+            Chooses low or high for right ace to maximize gap.
+            Uses a conservative, default bet size strategy.
+            Chooses which gap is larger with 'choose_left_gap' and
+                'steve_choose_leftright'. '''
     def __init__(self):
         self.name = 'SteveStrategy'
-    left_ace = s.left_ace_is_L
-    right_ace = s.default_right_ace
+    left_ace     = s.left_ace_is_L
+    right_ace    = s.default_right_ace
     bet_strategy = s.default_bet_strategy
-    def choose_left_gap(self, left, middle, right):
-        leftend, rightend, mid = s.srank(left,(left,right)), \
-                                 s.srank(right,(left,right)), \
-                                 s.srank(middle,(left,right))
-        lgap, rgap  = abs(mid-leftend), abs(rightend-mid)
+    def choose_left_gap(self, left: s.Rank, middle: s.Rank, right: s.Rank) -> bool:
+        ''' Returns True when left gap is larger than right gap, unless there's 
+            a gap of zero or one, which is always chosen. '''
+        leftend:  int = s.srank(left,(left,right))
+        rightend: int = s.srank(right,(left,right))
+        mid:  int = s.srank(middle,(left,right))                                 
+        lgap: int = abs(mid-leftend)
+        rgap: int = abs(rightend-mid)
         if lgap in [0,1]:         
             return rgap <= 10
         if lgap in [2,3,4,5,6,7]: 
@@ -24,10 +33,12 @@ class SteveStrategy(Strategy):
             return (rgap <= 11) or ((lgap==12) and (rgap==12))
         if lgap in [13]:          
             return True
-    def steve_choose_leftright(self, left, middle, right):
-        left_gap = self.choose_left_gap(left, middle, right)
-        nl       = left   if left_gap else middle
-        nr       = middle if left_gap else right
+    def steve_choose_leftright(self, left:s.Rank, middle:s.Rank, right:s.Rank) \
+        -> tuple[s.Rank,s.Rank]:
+        ''' Chooses the widest of gaps, appropriately handling middle Aces. '''
+        left_gap: bool = self.choose_left_gap(left, middle, right)
+        nl: s.Rank     = left   if left_gap else middle
+        nr: s.Rank     = middle if left_gap else right
         if nl=='A': 
             nl='L'
         if nr=='A': 
@@ -35,12 +46,23 @@ class SteveStrategy(Strategy):
         return nl, nr
 
 class SteveExecution(GameExecution):
-    def execute(self, deck) -> int:
+    ''' Steve turn execution.
+            Handles main player like Crinton, except:
+                Chooses largest gap to bet with 'steve_choose_leftright'.
+    '''
+    def execute(self, deck: list[str]) -> int:
+        payouts: dict[int,int]
+        left: s.Rank
+        middle: s.Rank
+        right: s.Rank
         payouts, left, middle, right, deck, _ = ex.crinton_execute(self, deck)
-        payout = 0
+        payout: int = 0
         if self.player.chips > 0 and self.pot > 0 and middle:
+            nl: s.Rank
+            nr: s.Rank
             nl, nr = self.strategy.steve_choose_leftright(left, middle, right)
-            bet                    = self.choose_bet(left=nl, right=nr)
+            bet: int               = self.choose_bet(left=nl, right=nr)
+            xmiddle: s.Rank
             payout, xmiddle, deck  = self.get_payout(bet, deck, left=nl, right=nr)
         if payout:
             for p in range(len(self.players)):
@@ -49,11 +71,11 @@ class SteveExecution(GameExecution):
         return payouts, deck
 
     deal_leftright = ex.default_deal_leftright
-    choose_bet = ex.default_choose_bet
-    get_payout = ex.get_standard_payout
+    choose_bet     = ex.default_choose_bet
+    get_payout     = ex.get_standard_payout
 
 
-'''
+''' OLD SCHOOL
 crinton	Number of games: 100000000	Ante: 4
 Player 0  Strategies: default_strategy	Turns: 1212274237	Chips Won:  13198830	ROIt:    0.01089	Chips Won/g:    0.132   14.930
 Player 1  Strategies: default_strategy	Turns: 1192117310	Chips Won:   6641883	ROIt:    0.00557	Chips Won/g:    0.066   14.824

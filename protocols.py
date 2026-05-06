@@ -1,4 +1,3 @@
-from functools import cache
 from typing import Protocol
 from player import Player
 
@@ -7,6 +6,12 @@ type Rank = str
 STRAT_RANKS = 'L23456789TJQKH'
 
 class GameExecution(Protocol):
+    ''' Protocol for executing a turn of a game for a player.
+            'deal_leftright' delivers left and right cards, handles ranking Aces,
+               and ensures left card is lower ranked than right card.
+            'choose_bet' makes the betting decision and refers to strategy as needed.
+            'get_payout' resolves the turn and determines the payout to the player. 
+    '''
     def __init__(self, current_player: Player, players: list[Player], pot) -> int:
         self.player = current_player
         self.players = players
@@ -21,62 +26,18 @@ class GameExecution(Protocol):
         ...
 
 class Strategy(Protocol):
+    ''' Strategy models the choices players can make - they differentiate among 
+        types of player.
+            'left_ace' makes the choice of low or high for the first card being an Ace.
+            'right_ace' makes the same chocie for the second card being an Ace.
+            'bet_strategy' chooses the bet size given the cards dealt.
+    '''
     def left_ace() -> Rank:
         ...
     def right_ace(left: Rank) -> Rank:
         ...
     def bet_strategy(left: Rank, right: Rank) -> int:
         ...
-
-@cache
-def crank(card):
-    return card[0]
-
-@cache
-def srank(cr, lr=None):
-    if cr is None: 
-        return None
-    if cr == 'A':
-        if lr[0] in ['L','H']: 
-            return STRAT_RANKS.index(lr[0])
-        if lr[1] in ['L','H']: 
-            return STRAT_RANKS.index(lr[1])
-        return STRAT_RANKS.index('H') if (13-STRAT_RANKS.index(lr[0]) >= STRAT_RANKS.index(lr[1])) else STRAT_RANKS.index('L')
-    return STRAT_RANKS.index(cr)
-
-
-
-
-
-
-
-
-''' CRINTON strategy
-    deal left, right
-    make rank decision for left Ace, right Ace
-    choose bet size
-    deal middle card
-    calculate payout
-
-
-    STEVE strategy
-    deal L, R (like above)
-    make rank decision for left Ace, right Ace (like above)
-    get middle card (like above)
-    choose which gap to bet
-    choose bet size
-    deal xmiddle card
-    calculate payout
-
-    GAMBLOR strategy
-    Deal L, R.  --- uses above
-    Choose gamblor bet --- uses above
-    choose other gamblor bets
-    collect my payout
-    collect other player playouts
-'''
-
-
 
 
 

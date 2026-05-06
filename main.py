@@ -22,49 +22,50 @@ class Game:
                  players: list[Player], 
                  player_ante: int) \
                  -> None:
-        self.gtype     = gtype
-        self.execution = execution
-        self.players   = players
-        self.player_count: int = len(self.players)
-        self.player_ante       = player_ante
-        self.starting_chips: list[int] = [player.chips for player in self.players]
-        self.pot: int                  = 0
-        self.arg: int | None           = None
-        self.deck: list[str] | None    = None
+        self.gtype : GameType           = gtype
+        self.execution: p.GameExecution = execution
+        self.players: list[Player]      = players
+        self.player_count: int          = len(self.players)
+        self.player_ante: int           = player_ante
+        self.starting_chips: list[int]  = [player.chips for player in self.players]
+        self.pot: int                   = 0
+        self.arg: int | None            = None
+        self.deck: list[str] | None     = None
         self.play_game()
 
-    def ante(self):
+    def ante(self) -> None:
         self.pot = self.player_ante * self.player_count
         for player in self.players:
             player.chips -= self.player_ante
             player.payouts.append(-self.player_ante)
 
-    def process_payout(self, cp, payout):
+    def process_payout(self, cp: int, payout: int) -> None:
         self.players[cp].chips += payout
         self.pot -= payout
 
-    def deal_deck(self):
-        self.deck = [r+s for r in '23456789TJQKA' for s in 'SCHD']
+    def deal_deck(self) -> list[str]:
+        self.deck: list[str] = [r+s for r in '23456789TJQKA' for s in 'SCHD']
         np.random.shuffle(self.deck)
         if not self.arg:
-            self.arg = tuple([self.deck.pop() for _ in range(ARG_COUNT[self.gtype])])
+            self.arg: tuple[str, ...] = tuple([self.deck.pop() \
+                                               for _ in range(ARG_COUNT[self.gtype])])
             return self.deck
-        self.deck = [e for e in self.deck if e not in self.arg]
+        self.deck: list[str] = [e for e in self.deck if e not in self.arg]
 
-    def play_game(self):
+    def play_game(self) -> None:
         self.ante()
         self.deal_deck()
-        current_player = 0
+        current_player: int = 0
 
         while self.pot > 0:
-            if self.players[current_player].chips > 0: # only play the turn if the player has chips
-                self.turn = self.execution(self.players[current_player], self.players, self.pot)
-                self.players[current_player].turns += 1 # increment player turn counter
+            if self.players[current_player].chips > 0: 
+                self.turn: p.GameExecution = \
+                    self.execution(self.players[current_player], self.players, self.pot)
+                self.players[current_player].turns += 1 
                 if len(self.deck) < MIN_COUNT[self.gtype]: 
-                    self.deal_deck() # if there aren't enough cards remaining in the deck, reshuffle
+                    self.deal_deck() 
+                payouts: dict[int,int]
                 payouts, self.deck = self.turn.execute(self.deck)
-                # self.process_payout(current_player, self.payout)
-                # self.players[current_player].payouts.append(self.payout)
                 for p in range(len(self.players)):
                     if payouts[p] != 0:
                         self.process_payout(p, payouts[p])
@@ -82,23 +83,17 @@ def run_analysis(gtype: GameType,
                                         game_count=game_count, 
                                         ante=player_ante)
     for _ in range(game_count):
-        players = [Player(chips=160, 
-                          strategy=player_strategies[j]) 
-                   for j in range(player_count)]
+        players: list[Player] = [Player(chips=160, 
+                                 strategy=player_strategies[j]) 
+                                 for j in range(player_count)]
         game = Game(gtype=gtype, 
                     execution=execution, 
                     players=players, 
                     player_ante=player_ante)
-#        if gtype=='gamblor':
-#            for j in range(player_count):
-#                print(f'{game.players[j].payouts=} {sum(game.players[j].payouts)}')
         for j in range(player_count):
             analysis.turns[j]     += game.players[j].turns
             analysis.chips_won[j] += game.players[j].chips-game.starting_chips[j]
-#            if gtype=='gamblor': 
-#                print(f'{analysis.chips_won[j]=}')
             analysis.payouts[j].extend([sum(game.players[j].payouts)])
-#        if gtype=='gamblor': input()
     analysis.display_results()
 
 def main():
