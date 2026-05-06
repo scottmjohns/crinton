@@ -23,8 +23,9 @@ class CrintonStrategy(Strategy):
         return DEFAULT_BET[gap]
 
 class CrintonExecution(GameExecution):
-    def __init__(self, current_player: Player, pot) -> int:
+    def __init__(self, current_player: Player, players: list[Player], pot) -> int:
         self.player = current_player
+        self.players = players
         self.strategy = self.player.strategy
         self.pot = pot
 
@@ -32,8 +33,9 @@ class CrintonExecution(GameExecution):
         left, right, deck = self.deal_leftright(deck)
         bet: int = self.choose_bet(left=left, right=right)
         payout, middle, deck = self.get_payout(bet, deck, left=left, right=right)
-        return payout, deck
-    
+        payouts = {p: payout if self.players[p]==self.player else 0 for p in range(len(self.players))}
+        return payouts, deck
+
     def deal_leftright(self, deck) -> tuple[Rank, Rank]:
         left, right = crank(deck.pop()), crank(deck.pop())
         if left  == 'A': 

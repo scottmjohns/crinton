@@ -54,8 +54,9 @@ class SteveStrategy(Strategy):
             '''
 
 class SteveExecution(GameExecution):
-    def __init__(self, current_player: Player, pot) -> int:
+    def __init__(self, current_player: Player, players: list[Player], pot) -> int:
         self.player = current_player
+        self.players = players
         self.strategy = self.player.strategy
         self.pot = pot
 
@@ -63,11 +64,15 @@ class SteveExecution(GameExecution):
         left, right, deck = self.deal_leftright(deck)
         bet: int = self.choose_bet(left=left, right=right)
         payout, middle, deck = self.get_payout(bet, deck, left=left, right=right)
+        payouts = {p: payout if self.players[p]==self.player else 0 for p in range(len(self.players))}
         if self.player.chips > 0 and self.pot > 0 and middle:
             nl, nr = self.strategy.steve_choose_leftright(left, middle, right)
             bet                    = self.choose_bet(left=nl, right=nr)
             payout, xmiddle, deck  = self.get_payout(bet, deck, left=nl, right=nr)
-        return payout, deck
+        for p in range(len(self.players)):
+            if self.player==self.players[p]:
+                payouts[p] += payout
+        return payouts, deck
 
     def deal_leftright(self, deck) -> tuple[Rank, Rank]:
         left, right = crank(deck.pop()), crank(deck.pop())

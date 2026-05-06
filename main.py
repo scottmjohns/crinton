@@ -11,8 +11,8 @@ class GameType(StrEnum):
     STEVE   = auto()
     GAMBLOR = auto()
 
-ARG_COUNT = {'crinton': 3, 'steve': 5}
-MIN_COUNT = {'crinton': 3, 'steve': 4}
+ARG_COUNT = {'crinton': 3, 'steve': 5, 'gamblor': 7}
+MIN_COUNT = {'crinton': 3, 'steve': 4, 'gamblor': 3}
 
 class Game:
     def __init__(self, 
@@ -57,13 +57,17 @@ class Game:
 
         while self.pot > 0:
             if self.players[current_player].chips > 0: # only play the turn if the player has chips
-                self.turn = self.execution(self.players[current_player], self.pot)
+                self.turn = self.execution(self.players[current_player], self.players, self.pot)
                 self.players[current_player].turns += 1 # increment player turn counter
                 if len(self.deck) < MIN_COUNT[self.gtype]: 
                     self.deal_deck() # if there aren't enough cards remaining in the deck, reshuffle
-                self.payout, self.deck = self.turn.execute(self.deck)
-                self.process_payout(current_player, self.payout)
-                self.players[current_player].payouts.append(self.payout)
+                payouts, self.deck = self.turn.execute(self.deck)
+                # self.process_payout(current_player, self.payout)
+                # self.players[current_player].payouts.append(self.payout)
+                for p in range(len(self.players)):
+                    if payouts[p] != 0:
+                        self.process_payout(p, payouts[p])
+                        self.players[p].payouts.append(payouts[p])
             current_player = (current_player+1) % self.player_count
 
 def run_analysis(gtype: GameType, 
@@ -94,13 +98,13 @@ def main():
     player_count: int = 5
     run_analysis(gtype='crinton',
                  player_count=player_count,
-                 game_count=1_000_000,
+                 game_count=10,
                  player_ante=4,
                  execution=cr.CrintonExecution,
                  player_strategies = [cr.CrintonStrategy()]*player_count)
     run_analysis(gtype='steve',
                  player_count=player_count,
-                 game_count=1_000_000,
+                 game_count=10,
                  player_ante=4,
                  execution=st.SteveExecution,
                  player_strategies = [st.SteveStrategy()]*player_count)
